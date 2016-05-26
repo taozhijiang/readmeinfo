@@ -2,17 +2,62 @@
 <html>
    <head>
     <meta charset=utf-8>
-      <title>{{ title }}</title>
-      
+    <title>{{ title }}</title>
+    <script type="text/javascript" src="static/jquery-2.2.4.min.js"></script>
+    <style> 
+      p{margin:2px 0} 
+    </style> 
+      {% from utils import utc2local %}
    </head>
-   <body>
-     <a href="/">MainPage</a>
 
-     <select size="1" onchange="changeEventHandler(event);">
-      <option>Favorite</option>
-      <option>Normal</option>
-      <option>Hate</option>
-     </select>
+   <body>
+
+    <form action="/read" method="get">
+        <a href="/">主页</a>
+        <select name="typeselect" id="types">
+            <option value="0" {% if types== "0" %} selected {% end %} >喜欢</option>
+            <option value="1" {% if types== "1" %} selected {% end %} >一般</option>
+            <option value="2" {% if types== "2" %} selected {% end %} >讨厌</option>
+        </select> 
+    </form>
+
+    <script type="text/javascript">
+    jQuery(function() {
+        jQuery('#types').change(function() {
+            this.form.submit();
+        });
+    });
+
+
+  function valueMe(myRadio) {
+      $.ajax({
+        url:'/score',
+        type:'POST',
+        data: {"uuid": myRadio.name, "score": myRadio.value },
+        success:function(){
+            //alert("Update:" + myRadio.name + " OK!");
+        }
+      });
+    }
+    </script>
+
+     <ul style="line-height: 100%">
+     {% for item in items %}
+         <li>
+            <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</span></a>
+         </li>
+           <form>
+		   <p>发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:
+            <input type="radio" name={{ item['uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>赞</input>
+            <input type="radio" name={{ item['uuid'] }} value="1" onclick="valueMe(this);" {% if item['news_score'] == 1 %} checked="checked" {% end %}>中</input>
+            <input type="radio" name={{ item['uuid'] }} value="2" onclick="valueMe(this);" {% if item['news_score'] == 2 %} checked="checked" {% end %}>踩</input>
+           </form>
+        </p>
+         <div>{% raw item['news_desc'] %}</div>
+         <br/><br/>
+     {% end %}
+    </ul>
+
 
    </body>
  </html>
