@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset=utf-8>
+    <title>readmeinfo - register account</title>
+    <link rel="stylesheet" type="text/css" href="/static/main.css") />
+    </head>
+    <body>
+        <p><a href="/">返回主页</a></p>
+        {% if error %}
+            <p> {{ error }} </p>
+        {%end%}
+        <h3>登陆页面:</h3>
+        <form method="post" action="/login">
+            <p>邮件地址　<input type="text" name="email" style="width:250px;"></p>
+            <p>密　　码　<input type="password" name="passwd" style="width:250px;"></p>
+            <input type="submit" class='lsbb' value='登陆'>
+        </form>
+		<p>没有账号？前往<a href="/register">注册</a>。</p>
+    </body>
+</html>

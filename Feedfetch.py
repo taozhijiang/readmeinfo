@@ -6,6 +6,7 @@ import datetime
 import threading
 
 import torndb
+from tornado.options import define, options
 
 import feedparser
 from bs4 import BeautifulSoup
@@ -14,7 +15,8 @@ from bs4 import BeautifulSoup
 class FeedfetchThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)  
-        self.db_conn = torndb.Connection("192.168.122.1", "readmeinfo", "v5kf", "v5kf")
+        self.db_conn = torndb.Connection(options.dbhost, options.dbname, 
+                                         options.dbuser, options.dbpass)
         return
         
     def fixed_feedparser_parse(self, uri):
@@ -43,8 +45,8 @@ class FeedfetchThread(threading.Thread):
                 soup = BeautifulSoup(item.description)
                 item.description = soup.find('p').text
             
-            sql = """ INSERT INTO site_news (news_title, news_link, news_pubtime, news_desc, news_sitefrom, news_score, news_touched, time) 
-            VALUES (%s, %s, %s, %s, %s, 1, 0, NOW()) """
+            sql = """ INSERT INTO site_news (news_title, news_link, news_pubtime, news_desc, news_sitefrom, time) 
+            VALUES (%s, %s, %s, %s, %s, NOW()) """
             self.db_conn.execute(sql, item.title, item.link, tm, item.description, d.feed.title)
         print("Done.")
             

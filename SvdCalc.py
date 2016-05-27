@@ -11,13 +11,15 @@ import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 import torndb
+from tornado.options import define, options
 
 from gensim import corpora, models, similarities
 
 class SvdCalcThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)  
-        self.db_conn = torndb.Connection("192.168.122.1", "readmeinfo", "v5kf", "v5kf")
+        self.db_conn = torndb.Connection(options.dbhost, options.dbname, 
+                                         options.dbuser, options.dbpass)
         today = datetime.date.today()
         self.dumpfile = "svddump.%d_%d" %(today.month, today.day)
         self.stopfile = "stopwords.txt"
