@@ -12,7 +12,7 @@
 
    <body>
 
-    <form action="/read" method="get">
+    <form action="/browse" method="get">
         <a href="/">主页</a>
         <select name="typeselect" id="types">
             <option value="0" {% if types== "0" %} selected {% end %} >喜欢</option>
@@ -24,6 +24,7 @@
 
 
     <script type="text/javascript">
+
     jQuery(function() {
         jQuery('#types').change(function() {
             this.form.submit();
@@ -35,12 +36,13 @@
       $.ajax({
         url:'/score',
         type:'POST',
-        data: {"uuid": myRadio.name, "score": myRadio.value },
+        data: { "uuid": myRadio.name, "score": myRadio.value },
         success:function(){
             //alert("Update:" + myRadio.name + " OK!");
         }
       });
     }
+
     </script>
 
      <ul style="line-height: 100%">

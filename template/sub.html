@@ -4,14 +4,16 @@
     <meta charset=utf-8>
     <title>readmeinfo - submit new feed/atom</title></head>
     <link rel="stylesheet" type="text/css" href="/static/main.css") />
-    <body>
-        <p><a href="/">返回主页</a></p>
-        <p>当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
-        <h3>提交新Feed/Atom:</h3>
-        <form method="post" action="/sub">
-            <p>Feed/Atom URI<br><input type="text" name="feeduri"　style="width:250px;"></p>
-            <p>Comment　　　<br><input type="text" name="desc"　style="width:250px;"></p>
-            <input type="submit" class='lsbb' value='提交Feed/Atom'>
+    <body class="normal_text">
+        <p><a href="/">返回主页</a>　当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
+        {% if error %}
+            <p class="error_text"> {{ error }} </p>
+        {%end%}
+        <p class="head_text">提交新Feed/Atom:</p>
+        <form method="post" action="/submit">
+            <p>Feed/Atom 地址　<input type="text" name="feeduri" style="width:250px;"></p>
+            <p>注释　　<input type="text" name="comments" style="width:325px;"></p>
+            <input type="submit" class="lsbb" value="提交Feed/Atom">
         </form>
     </body>
 </html>

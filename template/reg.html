@@ -5,9 +5,12 @@
     <title>readmeinfo - register account</title>
     <link rel="stylesheet" type="text/css" href="/static/main.css") />
     </head>
-    <body>
+    <body class="normal_text">
         <p><a href="/">返回主页</a></p>
-        <h3>注册信息:</h3>
+        {% if error %}
+            <p class="error_text"> {{ error }} </p>
+        {%end%}
+        <p class="head_text">注册信息:</p>
         <form method="post" action="/register">
             <p>姓　　名　<input type="text" name="name" style="width:250px;"></p>
             <p>密　　码　<input type="password" name="passwd" style="width:250px;"></p>

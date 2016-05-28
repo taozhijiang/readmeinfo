@@ -14,3 +14,21 @@
   height: 30px;
   width: 160px;
 }
+
+.head_text {
+    font-family: tahoma, 'microsoft yahei', 微软雅黑;
+    color:#4d90fe;
+    font-size:22px;
+}
+
+.normal_text {
+    font-family: tahoma, 'microsoft yahei', 微软雅黑;
+    color:#0479A7;
+    font-size:18px;
+}
+
+.error_text {
+    font-family: tahoma, 'microsoft yahei', 微软雅黑;
+    color:red;
+    font-size:18px;
+}
