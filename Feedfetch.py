@@ -11,12 +11,14 @@ from tornado.options import define, options
 import feedparser
 from bs4 import BeautifulSoup
 
+desc_p_set = ('jobbole.com', 'ifanr.com', 'williamlong.info', 'pansci.asia', 'zhihu.com');
 
 class FeedfetchThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)  
         self.db_conn = torndb.Connection(options.dbhost, options.dbname, 
-                                         options.dbuser, options.dbpass)
+                                         options.dbuser, options.dbpass,
+                                         time_zone=options.dbtimezone)
         return
         
     def fixed_feedparser_parse(self, uri):
@@ -41,9 +43,10 @@ class FeedfetchThread(threading.Thread):
                                    item.updated_parsed[3],item.updated_parsed[4],item.updated_parsed[5])
             
             # 对每个站点的description净化特殊处理
-            if 'jobbole.com' in item.link or 'ifanr.com' in item.link:
-                soup = BeautifulSoup(item.description)
-                item.description = soup.find('p').text
+            for site_d in desc_p_set:
+                if site_d in item.link:
+                    soup = BeautifulSoup(item.description)
+                    item.description = soup.find('p').text
             
             sql = """ INSERT INTO site_news (news_title, news_link, news_pubtime, news_desc, news_sitefrom, time) 
             VALUES (%s, %s, %s, %s, %s, NOW()) """

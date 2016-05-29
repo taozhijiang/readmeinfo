@@ -16,6 +16,7 @@ define("dbhost", default="127.0.0.1", help="database host name/ip")
 define("dbname", default="readmeinfo", help="database name")
 define("dbuser", default="v5kf", help="database username")
 define("dbpass", default="v5kf", help="database passwd")
+define("dbtimezone", default="+8:00")
 
 
 if __name__ == "__main__":

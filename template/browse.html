@@ -11,38 +11,46 @@
    </head>
 
    <body>
-
-    <form action="/browse" method="get">
-        <a href="/">主页</a>
-        <select name="typeselect" id="types">
-            <option value="0" {% if types== "0" %} selected {% end %} >喜欢</option>
-            <option value="1" {% if types== "1" %} selected {% end %} >一般</option>
-            <option value="2" {% if types== "2" %} selected {% end %} >讨厌</option>
-        </select> 
-    </form>
-    <p>当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
-
-
+<p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
+<form id="formtypes" action="/browse" method="get">
+    <input type="radio" name="types" value="1" {% if types== "1" %} checked="checked" {% end %} >最新</input>
+    <input type="radio" name="types" value="0" {% if types== "0" %} checked="checked" {% end %} >喜欢</input>
+    <input type="radio" name="types" value="2" {% if types== "2" %} checked="checked" {% end %} >讨厌</input>
+    ，浏览第
+    <select name="page" id="page">
+    {% for i in range(int(page_num)) %}
+        <option value={{ repr(i) }} {% if page == repr(i) %} selected {% end %} >{{ repr(i) }}</option>
+    {% end %}
+    </select>
+    页
+</form>
+    
     <script type="text/javascript">
 
-    jQuery(function() {
-        jQuery('#types').change(function() {
-            this.form.submit();
-        });
+    $('input[type=radio][name=types]').on('change', function() {
+        $('#page').get(0).options[0].selected = true
+        this.form.submit();
     });
 
+   jQuery(function() {
+        jQuery('#page').change(function() {
+         this.form.submit();
+      });
+    });
 
-  function valueMe(myRadio) {
-      $.ajax({
-        url:'/score',
-        type:'POST',
-        data: { "uuid": myRadio.name, "score": myRadio.value },
-        success:function(){
+    function valueMe(myRadio) {
+        $.ajax({
+          url:'/score',
+          type:'POST',
+          data: { "uuid": myRadio.name, "score": myRadio.value },
+          success:function(){
             //alert("Update:" + myRadio.name + " OK!");
-        }
+            //
+            // 刷新页面
+            $('form[id=formtypes]').submit();
+          }
       });
     }
-
     </script>
 
      <ul style="line-height: 100%">
@@ -53,7 +61,6 @@
            <form>
 		   <p>发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:
             <input type="radio" name={{ item['uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>赞</input>
-            <input type="radio" name={{ item['uuid'] }} value="1" onclick="valueMe(this);" {% if item['news_score'] == 1 %} checked="checked" {% end %}>中</input>
             <input type="radio" name={{ item['uuid'] }} value="2" onclick="valueMe(this);" {% if item['news_score'] == 2 %} checked="checked" {% end %}>踩</input>
            </form>
         </p>

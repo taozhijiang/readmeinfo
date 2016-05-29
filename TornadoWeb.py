@@ -51,7 +51,14 @@ class RegisterHandler(BaseHandler):
         passwd_hd = hashpw(passwd.encode(), gensalt())
         sql = "INSERT INTO site_user(username, passwd, email, xxxx) VALUES(%s, %s, %s, %s)"
         db_conn.execute(sql, name, passwd_hd, email, xxxx)
-        self.render("reg_ok.html", title="readmeinfo - register", name=name)
+        
+        # 检测
+        sql = "SELECT uuid, username FROM site_user WHERE email=%s; "
+        rets = db_conn.get(sql, email)
+        if rets:
+            self.render("reg_ok.html", title="readmeinfo - register", info=rets)
+        else:
+            self.render("reg.html", error="失败，请重试！")
         return
 
 class LoginHandler(BaseHandler):
@@ -112,13 +119,19 @@ class SubmitHandler(BaseHandler):
 
 class BrowseHandler(BaseHandler):
     @tornado.web.authenticated
+    # 添加分页显示，每页10篇文章，可以加快页面显示速度
     def get(self):
+        CNT_PER_PAGE = 10
         userid_s = repr(self.current_user['uuid'])        
-        types = self.get_query_argument('typeselect', "1") #默认浏览
+        types = self.get_query_argument('types', "1") #默认浏览
+        page = self.get_query_argument('page', "0")
         sql = """ SELECT * FROM (SELECT site_news.uuid, site_news.news_title, site_news.news_pubtime, site_news.news_link, site_news.news_sitefrom, site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, ATS.userid FROM site_news LEFT JOIN (SELECT news_user_score, newsid, userid FROM user_score WHERE userid="""
-        sql += userid_s + """) ATS ON site_news.uuid = ATS.newsid WHERE DATE(site_news.time)=CURRENT_DATE()) ATT  WHERE news_score=""" + types + ";"
+        sql += userid_s + """) ATS ON site_news.uuid = ATS.newsid WHERE DATE(site_news.time)=CURRENT_DATE()) ATT  WHERE news_score=""" + types + """ ORDER BY news_pubtime DESC """
+        total_count = db_conn.execute_rowcount(sql + ";")
+        page_num = int(total_count/CNT_PER_PAGE) + bool(total_count%CNT_PER_PAGE);
+        sql += " LIMIT %d,%d ; " %(int(page) * CNT_PER_PAGE, CNT_PER_PAGE)
         articles = db_conn.query(sql)
-        self.render("browse.html", title="readmeinfo - browse", items=articles, types=types)
+        self.render("browse.html", title="readmeinfo - browse", items=articles, types=types, page=page, page_num=page_num)
 
 class ReMaxentHandler(BaseHandler):
     @tornado.web.authenticated
@@ -160,7 +173,8 @@ class TornadoThread(threading.Thread):
         global db_conn
         threading.Thread.__init__(self)  
         db_conn = torndb.Connection(options.dbhost, options.dbname, 
-                                    options.dbuser, options.dbpass)
+                                    options.dbuser, options.dbpass,
+                                    time_zone=options.dbtimezone)
         return
     
     def run(self):

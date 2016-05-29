@@ -19,7 +19,8 @@ class SvdCalcThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)  
         self.db_conn = torndb.Connection(options.dbhost, options.dbname, 
-                                         options.dbuser, options.dbpass)
+                                         options.dbuser, options.dbpass,
+                                         time_zone=options.dbtimezone)
         today = datetime.date.today()
         self.dumpfile = "svddump.%d_%d" %(today.month, today.day)
         self.stopfile = "stopwords.txt"
