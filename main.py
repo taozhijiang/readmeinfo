@@ -2,21 +2,24 @@
 
 import os
 import time
+import queue
 
 from tornado.options import define, options
-
-from SvdCalc import SvdCalcThread
-from Feedfetch import FeedfetchThread
-from TornadoWeb import TornadoThread
-
-import threading
-thread_dict = dict()
-
 define("dbhost", default="127.0.0.1", help="database host name/ip")
 define("dbname", default="readmeinfo", help="database name")
 define("dbuser", default="v5kf", help="database username")
 define("dbpass", default="v5kf", help="database passwd")
 define("dbtimezone", default="+8:00")
+
+define("recmaxent_queue", default=queue.Queue())
+
+import threading
+thread_dict = dict()
+from RecSvd import RecSvdThread
+from Feedfetch import FeedfetchThread
+from TornadoWeb import TornadoThread
+from RecMaxEnt import RecMaxEntThread
+
 
 
 if __name__ == "__main__":
@@ -30,9 +33,13 @@ if __name__ == "__main__":
     t.start()
     thread_dict["FeedfetchThread"] = t    
 
-    t = SvdCalcThread()
+    #t = RecSvdThread()
+    #t.start()
+    #thread_dict["RecSvdThread"] = t   
+    
+    t = RecMaxEntThread()
     t.start()
-    thread_dict["SvdCalcThread"] = t    
+    thread_dict["RecMaxEntThread"] = t      
     
     while True:
         time.sleep(10)

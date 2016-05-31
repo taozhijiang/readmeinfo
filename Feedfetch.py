@@ -33,6 +33,8 @@ class FeedfetchThread(threading.Thread):
     
     def do_this_uri(self, uri):
         d = self.fixed_feedparser_parse(uri)
+        if not d.feed:
+            return None
         print('Processing: %s' %(d.feed.link))
         for item in d.entries:
             sql = """ SELECT news_link FROM site_news WHERE news_link=%s """
@@ -46,7 +48,8 @@ class FeedfetchThread(threading.Thread):
             for site_d in desc_p_set:
                 if site_d in item.link:
                     soup = BeautifulSoup(item.description)
-                    item.description = soup.find('p').text
+                    if soup.find('p'):
+                        item.description = soup.find('p').text
             
             sql = """ INSERT INTO site_news (news_title, news_link, news_pubtime, news_desc, news_sitefrom, time) 
             VALUES (%s, %s, %s, %s, %s, NOW()) """
@@ -69,7 +72,7 @@ class FeedfetchThread(threading.Thread):
                     sql = """ UPDATE site_info SET crawl_date=NOW() WHERE feed_uri=%s and valid = 1; """
                     self.db_conn.execute(sql, item['feed_uri'])
                     
-            time.sleep(30)
+            time.sleep(300)
             
         return
 

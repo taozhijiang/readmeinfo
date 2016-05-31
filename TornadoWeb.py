@@ -10,13 +10,12 @@ from utils import fixed_feedparser_parse
 
 import os
 import time
+import threading
 
 import torndb
 
 template_path = os.path.join(os.path.dirname(__file__), "template")
 static_path   = os.path.join(os.path.dirname(__file__), "static")
-
-import threading
 
 db_conn = None
 
@@ -44,7 +43,7 @@ class RegisterHandler(BaseHandler):
             return
         
         # 先检查有没有该用户
-        sql = "SELECT uuid FROM site_user WHERE email=%s;"
+        sql = "SELECT user_uuid FROM site_user WHERE email=%s;"
         if db_conn.query(sql, email):
             self.render("reg.html", error="该Email已经被注册！")
             return
@@ -53,7 +52,7 @@ class RegisterHandler(BaseHandler):
         db_conn.execute(sql, name, passwd_hd, email, xxxx)
         
         # 检测
-        sql = "SELECT uuid, username FROM site_user WHERE email=%s; "
+        sql = "SELECT user_uuid, username FROM site_user WHERE email=%s; "
         rets = db_conn.get(sql, email)
         if rets:
             self.render("reg_ok.html", title="readmeinfo - register", info=rets)
@@ -98,7 +97,7 @@ class SubmitHandler(BaseHandler):
         
     @tornado.web.authenticated
     def post(self):
-        userid_s = repr(self.current_user['uuid'])
+        user_id = self.current_user['user_uuid']
         feeduri = self.get_argument('feeduri')    
         comments = self.get_query_argument('comments'," ")
         if not feeduri:
@@ -113,7 +112,7 @@ class SubmitHandler(BaseHandler):
             error_info = "谢谢！提交的%s(%s)已经存在！"%(d.feed.link, d.feed.title)
             self.render("sub.html", error=error_info)
             return
-        sql = "INSERT INTO site_info(site_title, site_link, feed_uri, site_desc, create_date, valid, comments, create_usr) VALUES(%s, %s, %s, %s, NOW(), 1, %s," + userid_s + ");"
+        sql = "INSERT INTO site_info(site_title, site_link, feed_uri, site_desc, create_date, valid, comments, create_usr) VALUES(%s, %s, %s, %s, NOW(), 1, %s," + repr(user_id) + ");"
         db_conn.execute(sql, d.feed.title, d.feed.link, feeduri, d.feed.description, comments)
         self.render("sub_ok.html", title="readmeinfo - submit", sitename=d.feed.title)
 
@@ -122,34 +121,84 @@ class BrowseHandler(BaseHandler):
     # 添加分页显示，每页10篇文章，可以加快页面显示速度
     def get(self):
         CNT_PER_PAGE = 10
-        userid_s = repr(self.current_user['uuid'])        
+        user_id = self.current_user['user_uuid']        
         types = self.get_query_argument('types', "1") #默认浏览
         page = self.get_query_argument('page', "0")
-        sql = """ SELECT * FROM (SELECT site_news.uuid, site_news.news_title, site_news.news_pubtime, site_news.news_link, site_news.news_sitefrom, site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, ATS.userid FROM site_news LEFT JOIN (SELECT news_user_score, newsid, userid FROM user_score WHERE userid="""
-        sql += userid_s + """) ATS ON site_news.uuid = ATS.newsid WHERE DATE(site_news.time)=CURRENT_DATE()) ATT  WHERE news_score=""" + types + """ ORDER BY news_pubtime DESC """
+        sql = """SELECT * FROM (
+                     SELECT site_news.news_uuid, site_news.news_title, site_news.news_pubtime, site_news.news_link, site_news.news_sitefrom, 
+			    site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, ATS.userid FROM site_news 
+                        LEFT JOIN (SELECT news_user_score, newsid, userid FROM user_score WHERE userid=%d ) ATS ON site_news.news_uuid = ATS.newsid 
+                     WHERE DATE(site_news.time)=CURRENT_DATE()
+		) ATT  
+                WHERE news_score=%d ORDER BY news_pubtime DESC """ %(user_id, int(types))
         total_count = db_conn.execute_rowcount(sql + ";")
         page_num = int(total_count/CNT_PER_PAGE) + bool(total_count%CNT_PER_PAGE);
         sql += " LIMIT %d,%d ; " %(int(page) * CNT_PER_PAGE, CNT_PER_PAGE)
         articles = db_conn.query(sql)
+        
+        # fix
+        if page_num == 0: page_num = 1
         self.render("browse.html", title="readmeinfo - browse", items=articles, types=types, page=page, page_num=page_num)
 
 class ReMaxentHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
-        self.write("Not implement! <a href='/'>返回主页</a>")
-        pass
+        user_id = self.current_user['user_uuid']        
+        sort = self.get_query_argument('sort', "0") #默认浏览
+        sql = """ SELECT * FROM (
+                        SELECT site_news.news_uuid, site_news.news_title, site_news.news_pubtime, site_news.news_link, 
+                             site_news.news_sitefrom, site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, 
+                             IFNULL(ATS.userid, %d) as userid FROM site_news 
+                        LEFT JOIN (SELECT userid, newsid, news_user_score FROM user_score WHERE userid=%d) ATS 
+                            ON site_news.news_uuid = ATS.newsid
+                        WHERE DATE(site_news.time) = CURRENT_DATE()
+                    ) ATT INNER JOIN user_rcd ON ATT.userid = user_rcd.userid AND ATT.news_uuid = user_rcd.newsid 
+                    WHERE news_score=1 AND rcdmaxent IS NOT NULL ORDER BY rcdmaxent """ %(user_id, user_id)
+        if sort == "0":
+            sql += " DESC "
+        else:
+            sql += " ASC "
+        sql += "LIMIT 0, 100;"
+        articles = db_conn.query(sql)
+        if articles:
+            self.render("recmaxent.html", title="readmeinfo - Recommend MaxEnt", items=articles, sort=sort)
+            return
+        
+        # 检查当天是否有新的新闻
+        sql = """ SELECT news_uuid, time FROM site_news WHERE DATE(site_news.time)=CURRENT_DATE(); """
+        uuids = db_conn.query(sql)
+        if not uuids:
+            self.write("今天还没有新的新闻，请稍后再尝试！")
+            return
+        else:
+            for item in uuids:
+                sql = """ SELECT rcd_uuid FROM user_rcd WHERE userid=%d AND newsid=%d; """ %(user_id, item['news_uuid'])
+                if not db_conn.query(sql):
+                    sql = """ INSERT INTO user_rcd(userid, newsid, date) VALUES (%d, %d, DATE('%s')); """ %(user_id, item['news_uuid'], item['time'])
+                    db_conn.execute(sql)
+                
+            try:
+                options['recmaxent_queue'].put(user_id, block=True, timeout=30)
+                print("Queue %d from RecMaxEnt recommend!" %(user_id))
+            except Exception as e:
+                print("Queue %d from RecMaxEnt recommend Failed!" %(user_id))
+                pass
+            
+            self.write("今天共有%d条新闻，调度建立推荐索引，请稍后再试！" %(len(uuids)) )
+        return
+        
 
 # JUST RESERVED FOR AJAX API
 class ScoreHandler(BaseHandler):
     def post(self):
-        userid_s = repr(self.current_user['uuid'])
-        uuid = self.get_argument('uuid')
-        score = self.get_argument('score')
-        sql = "SELECT uuid FROM user_score WHERE userid=" + userid_s + " AND newsid=" + uuid + ";";
+        user_id = self.current_user['user_uuid']
+        news_uuid = int(self.get_argument('news_uuid'))
+        score = int(self.get_argument('score'))
+        sql = "SELECT score_uuid FROM user_score WHERE userid=%d AND newsid=%d ;" %(user_id, news_uuid)
         if db_conn.query(sql):
-            sql = "UPDATE user_score SET news_user_score=" + score + " WHERE userid=" + userid_s + " AND newsid=" + uuid + ";"
+            sql = "UPDATE user_score SET news_user_score=%d WHERE userid=%d AND newsid=%d;" %(score, user_id, news_uuid)
         else:
-            sql = "INSERT INTO user_score(userid, newsid, news_user_score) VALUES(" + userid_s + "," + uuid + "," + score +");"
+            sql = "INSERT INTO user_score(userid, newsid, news_user_score) VALUES(%d, %d, %d);" %(user_id, news_uuid, score)
         db_conn.execute(sql)
 
 tornado_handlers = [
