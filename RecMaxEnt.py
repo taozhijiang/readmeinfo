@@ -154,5 +154,7 @@ class RecMaxEntThread(threading.Thread):
                     break
             #　推荐条目完整性    
             self._database_santy_check()
+            
+            print('RecMaxEntThread:A')
 
         return

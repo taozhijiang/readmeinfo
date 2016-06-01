@@ -11,7 +11,8 @@ from tornado.options import define, options
 import feedparser
 from bs4 import BeautifulSoup
 
-desc_p_set = ('jobbole.com', 'ifanr.com', 'williamlong.info', 'pansci.asia', 'zhihu.com');
+desc_first_tag = {'jobbole.com':'p', 'ifanr.com':'p', 'williamlong.info':'p', 'pansci.asia':'p', 'zhihu.com':'p', 
+                  'geekpark.net':'h2', 'dajia.qq.com':'p'};
 
 class FeedfetchThread(threading.Thread):
     def __init__(self):
@@ -41,15 +42,18 @@ class FeedfetchThread(threading.Thread):
             if self.db_conn.execute_rowcount(sql, item.link):
                 print(" Already done for %s" %(d.feed.link))
                 return
-            tm = datetime.datetime(item.updated_parsed[0],item.updated_parsed[1],item.updated_parsed[2],
+            if item.updated_parsed:
+                tm = datetime.datetime(item.updated_parsed[0],item.updated_parsed[1],item.updated_parsed[2],
                                    item.updated_parsed[3],item.updated_parsed[4],item.updated_parsed[5])
+            else:
+                tm = datetime.datetime.now()
             
             # 对每个站点的description净化特殊处理
-            for site_d in desc_p_set:
+            for site_d in desc_first_tag:
                 if site_d in item.link:
                     soup = BeautifulSoup(item.description)
-                    if soup.find('p'):
-                        item.description = soup.find('p').text
+                    if soup.find(desc_first_tag[site_d]):
+                        item.description = soup.find(desc_first_tag[site_d]).text
             
             sql = """ INSERT INTO site_news (news_title, news_link, news_pubtime, news_desc, news_sitefrom, time) 
             VALUES (%s, %s, %s, %s, %s, NOW()) """
@@ -73,6 +77,7 @@ class FeedfetchThread(threading.Thread):
                     self.db_conn.execute(sql, item['feed_uri'])
                     
             time.sleep(300)
+            print('FeedfetchThread:A')
             
         return
 
