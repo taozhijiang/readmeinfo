@@ -59,7 +59,7 @@
             <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</span></a>
          </li>
            <form>
-		   <p>发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:
+		   <p>发布时间：{{ item['news_pubtime'] }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:
             <input type="radio" name={{ item['news_uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>赞</input>
             <input type="radio" name={{ item['news_uuid'] }} value="2" onclick="valueMe(this);" {% if item['news_score'] == 2 %} checked="checked" {% end %}>踩</input>
            </form>

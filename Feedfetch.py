@@ -12,7 +12,7 @@ import feedparser
 from bs4 import BeautifulSoup
 
 desc_first_tag = {'jobbole.com':'p', 'ifanr.com':'p', 'williamlong.info':'p', 'pansci.asia':'p', 'zhihu.com':'p', 
-                  'geekpark.net':'h2', 'dajia.qq.com':'p'};
+                  'geekpark.net':'h2', 'dajia.qq.com':'p', '36kr.com':'p' };
 
 class FeedfetchThread(threading.Thread):
     def __init__(self):

@@ -107,8 +107,8 @@ class SubmitHandler(BaseHandler):
         if not d.feed :
             self.render("sub.html", error="无法解析提交的地址")
             return
-        sql = """ SELECT site_id FROM site_info where site_link=%s"""
-        if db_conn.query(sql, d.feed.link):
+        sql = """ SELECT site_id FROM site_info where site_link=%s and site_title=%s"""
+        if db_conn.query(sql, d.feed.link, d.feed.title):
             error_info = "谢谢！提交的%s(%s)已经存在！"%(d.feed.link, d.feed.title)
             self.render("sub.html", error=error_info)
             return

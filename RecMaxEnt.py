@@ -66,6 +66,11 @@ class RecMaxEntThread(threading.Thread):
                 neg_feature.append((self.best_word_features(news_vector, news_vector),'neg'))
         print("POS:%d, NEG:%d" %(len(pos_feature),len(neg_feature)))
         
+        if len(pos_feature) <= 3 or len(neg_feature) <=3:
+            print("特征太少，放弃。。。")
+            self._user_classifier[userid] = None
+            return
+        
         trainSet = pos_feature + neg_feature
         self._user_classifier[userid] = MaxentClassifier.train(trainSet, max_iter=50)
         print("MaxEnt Classifier for %d build done!"%(userid))
@@ -101,10 +106,14 @@ class RecMaxEntThread(threading.Thread):
         sql = """ SELECT userid FROM user_rcd WHERE rcdmaxent IS NULL GROUP BY userid; """
         users = self.db_conn.query(sql)
         for user in users:
-            if user['userid'] not in self._user_classifier:
+            if user['userid'] not in self._user_classifier or not self._user_classifier[user['userid']]:
                 print("Building RecMaxEnt for user %d" %(user['userid']))
                 self._train_mode_for_user(user['userid'])            
-
+            
+            # 没有推荐训练信息，放弃    
+            if not self._user_classifier[user['userid']]:
+                continue
+            
             sql = """ SELECT rcd_uuid, userid, newsid FROM user_rcd WHERE userid=%d AND date=CURRENT_DATE() AND rcdmaxent IS NULL; """ %(user['userid'])
             items = self.db_conn.query(sql)
             for item in items:
@@ -134,9 +143,14 @@ class RecMaxEntThread(threading.Thread):
                 try:
                     # 队列中为最紧急的任务
                     it_userid = options['recmaxent_queue'].get(block=True, timeout=120)
-                    if it_userid not in self._user_classifier:
+                    if it_userid not in self._user_classifier or not self._user_classifier[it_userid]:
                         print("Building RecMaxEnt for user %d" %(it_userid))
                         self._train_mode_for_user(it_userid)
+
+                    # 没有推荐训练信息，放弃    
+                    if not self._user_classifier[it_userid]:
+                        continue                    
+                        
                     sql = """ SELECT newsid FROM user_rcd WHERE userid=%d AND rcdmaxent IS NULL; """ %(it_userid)
                     items = self.db_conn.query(sql)
                     for item in items:
