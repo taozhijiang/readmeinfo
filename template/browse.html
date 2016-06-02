@@ -56,7 +56,7 @@
      <ul style="line-height: 100%">
      {% for item in items %}
          <li>
-            <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</span></a>
+            <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</a>　<a target="_blank" href={% raw "/cache?id="+repr(item['news_uuid']) %}>页面快照</a></span>
          </li>
            <form>
 		   <p>发布时间：{{ item['news_pubtime'] }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:

@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 
+
 import tornado.ioloop
 import tornado.web
+import tornado.gen
+
 from tornado.options import define, options
+from tornado.httpclient import AsyncHTTPClient
 
 from bcrypt import hashpw, gensalt
 from utils import fixed_feedparser_parse
@@ -11,6 +15,9 @@ from utils import fixed_feedparser_parse
 import os
 import time
 import threading
+import re
+
+import copy
 
 import torndb
 
@@ -61,30 +68,52 @@ class RegisterHandler(BaseHandler):
         return
 
 class LoginHandler(BaseHandler):
+    def initialize(self, *args, **kwargs):
+        self.remote_ip = self.request.headers.get('X-Forwarded-For', 
+                                                  self.request.headers.get('X-Real-Ip', 
+                                                                           self.request.remote_ip))
+        
     def get(self):
         self.render("login.html", error=None)
         
+        # 0 登陆成功， 1 信息不全　2 未注册用户　3 密码错误
     def post(self):
         email = self.get_argument('email')
         passwd = self.get_argument('passwd')
-        if not email or not passwd:
+        if not email or not passwd:            
+            sql = "INSERT INTO site_log( email, remote_ip, action, result, time) VALUES (%s, %s, 1, 1, NOW())" 
+            db_conn.execute(sql, email, self.remote_ip)
             self.render("login.html", error="登陆信息不全")
             return            
         sql = "SELECT username, email, passwd FROM site_user WHERE email=%s and valid=1;"
         rets = db_conn.get(sql, email)
         if not rets:
+            sql = "INSERT INTO site_log( email, remote_ip, action, result, time) VALUES (%s, %s, 1, 2, NOW())" 
+            db_conn.execute(sql, email, self.remote_ip)     
             self.render("login.html", error="未注册账户")
             return
         passwd_x = hashpw(passwd.encode(), rets['passwd'].encode())
         if passwd_x == rets['passwd'].encode():
+            sql = "INSERT INTO site_log( email, remote_ip, action, result, time) VALUES (%s, %s, 1, 0, NOW())"
+            db_conn.execute(sql, email, self.remote_ip)   
             self.set_secure_cookie("siteuseremail", rets['email'])
             self.redirect(self.get_argument("next", "/"))            
         else:
+            sql = "INSERT INTO site_log( email, remote_ip, action, result, time) VALUES (%s, %s, 1, 3, NOW())" 
+            db_conn.execute(sql, email, self.remote_ip)      
             self.render("login.html", error="密码错误")
         return            
 
 class LogoutHandler(BaseHandler):
+    def initialize(self, *args, **kwargs):
+        self.remote_ip = self.request.headers.get('X-Forwarded-For', 
+                                                  self.request.headers.get('X-Real-Ip', 
+                                                                           self.request.remote_ip))
+        self.email = self.current_user['email']
+        
     def get(self):
+        sql = "INSERT INTO site_log( email, remote_ip, action, result, time) VALUES (%s, %s, 2, 0, NOW())"
+        db_conn.execute(sql, self.email, self.remote_ip)     
         self.clear_cookie("siteuseremail")
         self.redirect(self.get_argument("next", "/"))
         
@@ -186,8 +215,52 @@ class ReMaxentHandler(BaseHandler):
             
             self.write("今天共有%d条新闻，调度建立推荐索引，请稍后再试！" %(len(uuids)) )
         return
+   
+class CacheHandler(BaseHandler):  
+    @tornado.web.authenticated
+    @tornado.gen.coroutine
+    def get(self):
+        cache_id = self.get_query_argument("id", None)
+        if not cache_id:
+            self.write("Internel Error!")
+            return 
         
+        target_os_file = "template/cached/"+cache_id
+        target_td_file = "cached/"+cache_id
+        
+        if os.path.exists(target_os_file):
+            self.write("<h3>ATTENTION: Content just been cached, all rights reserved to the original website!</h3>") 
+            self.render(target_td_file)
+            return
+        
+        sql = "SELECT news_link FROM site_news WHERE news_uuid="+cache_id+";"
+        item = db_conn.get(sql)
+        if not item:
+            self.write("Internel Error!")
+            return
+        
+        http_client = AsyncHTTPClient()
+        response = yield http_client.fetch(item['news_link'])
 
+        match = re.search(r"""(?<![-\w])              #1
+                          (?:(?:en)?coding|charset)   #2
+                          (?:=(["'])?([-\w]+)(?(1)\1) #3
+                          |:\s*([-\w]+))""".encode("utf8"),
+                                           response.body, re.IGNORECASE|re.VERBOSE)        
+        encoding = match.group(match.lastindex) if match else b"utf8"
+        
+        try:
+            with open(target_os_file, "w") as fout:
+                fout.write(response.body.decode(encoding.decode("UTF-8"),'ignore'))            
+                
+        except Exception as e:
+            self.write("Unicode convert error!")
+            return
+        
+        self.write("<h3>ATTENTION: Content just been cached, all rights reserved to the original website!</h3>")           
+        self.write(response.body.decode(encoding.decode("UTF-8"),'ignore'))        
+        return
+ 
 # JUST RESERVED FOR AJAX API
 class ScoreHandler(BaseHandler):
     def post(self):
@@ -208,6 +281,7 @@ tornado_handlers = [
         (r"/login",    LoginHandler),
         (r"/logout",   LogoutHandler),
         (r"/submit",   SubmitHandler),
+        (r"/cache",    CacheHandler),
         (r"/browse",   BrowseHandler),
         (r"/remaxent", ReMaxentHandler),
         (r"/score",    ScoreHandler)]
@@ -228,6 +302,7 @@ class TornadoThread(threading.Thread):
     
     def run(self):
         print("TornadoThread Start....")
+        AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
         app = tornado.web.Application(tornado_handlers, template_path=template_path, static_path=static_path, 
                                       **settings)
         app.listen(4000, address="0.0.0.0")

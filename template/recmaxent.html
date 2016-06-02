@@ -42,8 +42,7 @@
      <ul style="line-height: 100%">
      {% for item in items %}
          <li>
-            <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</span></a>
-         </li>
+            <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</a>　<a target="_blank" href={% raw "/cache?id="+repr(item['news_uuid']) %}>页面快照</a></span>
            <form>
 		   <p>发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:
             <input type="radio" name={{ item['news_uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>赞</input>
