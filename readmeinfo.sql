@@ -70,7 +70,7 @@ CREATE TABLE `site_log` (
   `result` smallint(6) NOT NULL COMMENT '0:成功',
   `time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`log_uuid`),
-  KEY `email_f` (`email`),
+  KEY `email_i` (`email`),
   CONSTRAINT `email_f` FOREIGN KEY (`email`) REFERENCES `site_user` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;

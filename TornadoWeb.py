@@ -240,7 +240,11 @@ class CacheHandler(BaseHandler):
             return
         
         http_client = AsyncHTTPClient()
-        response = yield http_client.fetch(item['news_link'])
+        try:
+            response = yield http_client.fetch(item['news_link'])
+        except tornado.httpclient.HTTPError as e:
+            self.write("Original Server With Error: %d" %(e.code))
+            return
 
         match = re.search(r"""(?<![-\w])              #1
                           (?:(?:en)?coding|charset)   #2

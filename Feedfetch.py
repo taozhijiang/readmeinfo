@@ -33,10 +33,11 @@ class FeedfetchThread(threading.Thread):
                 raise    
     
     def do_this_uri(self, uri):
+        print('Processing: %s' %(uri))        
         d = self.fixed_feedparser_parse(uri)
-        if not d.feed:
+        if not d.feed or 'link' not in d.feed:
             return None
-        print('Processing: %s' %(d.feed.link))
+        print("==> LINK: %s" %(d.feed.link))
         for item in d.entries:
             sql = """ SELECT news_link FROM site_news WHERE news_link=%s """
             if self.db_conn.execute_rowcount(sql, item.link):
