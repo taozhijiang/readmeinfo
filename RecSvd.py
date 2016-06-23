@@ -215,7 +215,7 @@ class RecSvdThread(threading.Thread):
             while True:    
                 try:
                    # 队列中为最紧急的任务
-                    it_userid = options['recsvd_queue'].get(block=True, timeout=10)
+                    it_userid = options['recsvd_queue'].get(block=True, timeout=120)
                     if it_userid not in self._user_classifier or not self._user_classifier[it_userid]:
                         print("Building RecSvd for user %d" %(it_userid))
                         self._train_mode_for_user(it_userid)

@@ -12,6 +12,7 @@ define("dbpass", default="v5kf", help="database passwd")
 define("dbtimezone", default="+8:00")
 
 define("recmaxent_queue", default=queue.Queue())
+define("recsvd_queue", default=queue.Queue())
 
 import threading
 thread_dict = dict()
@@ -33,16 +34,16 @@ if __name__ == "__main__":
     t.start()
     thread_dict["FeedfetchThread"] = t    
 
-    #t = RecSvdThread()
-    #t.start()
-    #thread_dict["RecSvdThread"] = t   
+    t = RecSvdThread()
+    t.start()
+    thread_dict["RecSvdThread"] = t   
     
     t = RecMaxEntThread()
     t.start()
     thread_dict["RecMaxEntThread"] = t      
     
     while True:
-        time.sleep(10)
+        time.sleep(120)
         for (k,v) in thread_dict.items():
             if v.isAlive():
                 print (k+':A ', end = '')

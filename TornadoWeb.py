@@ -229,7 +229,7 @@ class ReSVDHandler(BaseHandler):
                             ON site_news.news_uuid = ATS.newsid
                         WHERE DATE(site_news.time) = CURRENT_DATE()
                     ) ATT INNER JOIN user_rcd ON ATT.userid = user_rcd.userid AND ATT.news_uuid = user_rcd.newsid 
-                    WHERE news_score=1 AND rcdsvd IS NOT NULL ORDER BY rcdmaxent """ %(user_id, user_id)
+                    WHERE news_score=1 AND rcdsvd IS NOT NULL ORDER BY rcdsvd """ %(user_id, user_id)
         if sort == "0":
             sql += " DESC "
         else:

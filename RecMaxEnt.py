@@ -42,7 +42,7 @@ class RecMaxEntThread(threading.Thread):
     
     def best_word_features(self, words, b_words):
         if not b_words: return None
-        return [ word for word in words if word in b_words]    
+        return dict([ word for word in words if word in b_words])
     
     def _train_mode_for_user(self, userid):
         if userid in self._user_classifier:
