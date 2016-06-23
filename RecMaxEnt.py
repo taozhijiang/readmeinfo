@@ -42,7 +42,7 @@ class RecMaxEntThread(threading.Thread):
     
     def best_word_features(self, words, b_words):
         if not b_words: return None
-        return dict([(word, True) for word in words if word in b_words])    
+        return [ word for word in words if word in b_words]    
     
     def _train_mode_for_user(self, userid):
         if userid in self._user_classifier:
@@ -51,7 +51,7 @@ class RecMaxEntThread(threading.Thread):
         # 只需要好评和差评的，一般评论不做参考，所以INNER JOIN足够
         sql = """ SELECT site_news.news_uuid, user_score.news_user_score as news_score FROM site_news 
                         INNER JOIN user_score ON site_news.news_uuid = user_score.newsid 
-                  WHERE DATE(site_news.time) < CURRENT_DATE() AND DATE(site_news.time) > DATE_SUB(CURRENT_DATE(),INTERVAL 5 DAY) 
+                  WHERE DATE(site_news.time) < CURRENT_DATE() AND DATE(site_news.time) > DATE_SUB(CURRENT_DATE(),INTERVAL 30 DAY) 
                         AND user_score.news_user_score != 1 AND user_score.userid=%d; """ %(userid)
         train_items = self.db_conn.query(sql);
 
@@ -151,7 +151,7 @@ class RecMaxEntThread(threading.Thread):
                     if not self._user_classifier[it_userid]:
                         continue                    
                         
-                    sql = """ SELECT newsid FROM user_rcd WHERE userid=%d AND rcdmaxent IS NULL; """ %(it_userid)
+                    sql = """ SELECT newsid FROM user_rcd WHERE userid=%d AND rcdmaxent IS NULL AND date=CURRENT_DATE(); """ %(it_userid)
                     items = self.db_conn.query(sql)
                     for item in items:
                         vect = nlp_master.get_today_vect(item['newsid'])

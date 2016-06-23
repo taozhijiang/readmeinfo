@@ -215,6 +215,53 @@ class ReMaxentHandler(BaseHandler):
             
             self.write("今天共有%d条新闻，调度建立推荐索引，请稍后再试！" %(len(uuids)) )
         return
+    
+class ReSVDHandler(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        user_id = self.current_user['user_uuid']        
+        sort = self.get_query_argument('sort', "0") #默认浏览
+        sql = """ SELECT * FROM (
+                        SELECT site_news.news_uuid, site_news.news_title, site_news.news_pubtime, site_news.news_link, 
+                             site_news.news_sitefrom, site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, 
+                             IFNULL(ATS.userid, %d) as userid FROM site_news 
+                        LEFT JOIN (SELECT userid, newsid, news_user_score FROM user_score WHERE userid=%d) ATS 
+                            ON site_news.news_uuid = ATS.newsid
+                        WHERE DATE(site_news.time) = CURRENT_DATE()
+                    ) ATT INNER JOIN user_rcd ON ATT.userid = user_rcd.userid AND ATT.news_uuid = user_rcd.newsid 
+                    WHERE news_score=1 AND rcdsvd IS NOT NULL ORDER BY rcdmaxent """ %(user_id, user_id)
+        if sort == "0":
+            sql += " DESC "
+        else:
+            sql += " ASC "
+        sql += "LIMIT 0, 100;"
+        articles = db_conn.query(sql)
+        if articles:
+            self.render("recsvd.html", title="readmeinfo - Recommend SVD", items=articles, sort=sort)
+            return
+        
+        # 检查当天是否有新的新闻
+        sql = """ SELECT news_uuid, time FROM site_news WHERE DATE(site_news.time)=CURRENT_DATE(); """
+        uuids = db_conn.query(sql)
+        if not uuids:
+            self.write("今天还没有新的新闻，请稍后再尝试！")
+            return
+        else:
+            for item in uuids:
+                sql = """ SELECT rcd_uuid FROM user_rcd WHERE userid=%d AND newsid=%d; """ %(user_id, item['news_uuid'])
+                if not db_conn.query(sql):
+                    sql = """ INSERT INTO user_rcd(userid, newsid, date) VALUES (%d, %d, DATE('%s')); """ %(user_id, item['news_uuid'], item['time'])
+                    db_conn.execute(sql)
+                
+            try:
+                options['recsvd_queue'].put(user_id, block=True, timeout=30)
+                print("Queue %d from RecSVD recommend!" %(user_id))
+            except Exception as e:
+                print("Queue %d from RecSVD recommend Failed!" %(user_id))
+                pass
+            
+            self.write("今天共有%d条新闻，调度建立推荐索引，请稍后再试！" %(len(uuids)) )
+        return    
    
 class CacheHandler(BaseHandler):  
     @tornado.web.authenticated
@@ -288,6 +335,7 @@ tornado_handlers = [
         (r"/cache",    CacheHandler),
         (r"/browse",   BrowseHandler),
         (r"/remaxent", ReMaxentHandler),
+        (r"/resvd",    ReSVDHandler),
         (r"/score",    ScoreHandler)]
 
 settings = {
