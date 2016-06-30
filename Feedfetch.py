@@ -78,7 +78,7 @@ class FeedfetchThread(threading.Thread):
                     self.db_conn.execute(sql, item['feed_uri'])
                     
             time.sleep(300)
-            print('FeedfetchThread:A')
+            print('FeedfetchThread:A time:' + repr(datetime.datetime.now()))
             
         return
 

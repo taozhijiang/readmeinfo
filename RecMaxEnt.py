@@ -169,6 +169,6 @@ class RecMaxEntThread(threading.Thread):
             #　推荐条目完整性    
             self._database_santy_check()
             
-            print('RecMaxEntThread:A')
+            print('RecMaxEntThread:A time:' + repr(datetime.datetime.now()))
 
         return

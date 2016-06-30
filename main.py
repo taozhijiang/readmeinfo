@@ -2,6 +2,7 @@
 
 import os
 import time
+import datetime
 import queue
 
 from tornado.options import define, options
@@ -50,7 +51,7 @@ if __name__ == "__main__":
             else:
                 print (k+':D ', end = '')        
         print()
-        print('main:A')
+        print('main:A () time:' + repr(datetime.datetime.now()))
     
     
     

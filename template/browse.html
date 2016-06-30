@@ -2,28 +2,33 @@
 <html>
    <head>
     <meta charset=utf-8>
-    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script type="text/javascript" src="static/jquery-2.2.4.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/main.css") />
+
+    <title>{{ title }}</title>
     <style> 
       p{margin:2px 0} 
     </style> 
       {% from utils import utc2local %}
    </head>
 
-   <body>
-<p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
-<form id="formtypes" action="/browse" method="get">
-    <input type="radio" name="types" value="1" {% if types== "1" %} checked="checked" {% end %} >最新</input>
-    <input type="radio" name="types" value="0" {% if types== "0" %} checked="checked" {% end %} >喜欢</input>
-    <input type="radio" name="types" value="2" {% if types== "2" %} checked="checked" {% end %} >讨厌</input>
-    ，浏览第
-    <select name="page" id="page">
-    {% for i in range(int(page_num)) %}
-        <option value={{ repr(i) }} {% if page == repr(i) %} selected {% end %} >{{ repr(i) }}</option>
-    {% end %}
-    </select>
-    页
-</form>
+   <body class="eye_process_body" >
+     <div class="eye_process_head">
+          <p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
+          <form id="formtypes" action="/browse" method="get">
+              <input type="radio" name="types" value="1" {% if types== "1" %} checked="checked" {% end %} >最新</input>
+              <input type="radio" name="types" value="0" {% if types== "0" %} checked="checked" {% end %} >喜欢</input>
+              <input type="radio" name="types" value="2" {% if types== "2" %} checked="checked" {% end %} >讨厌</input>
+              ，浏览第
+              <select name="page" id="page">
+              {% for i in range(int(page_num)) %}
+                  <option value={{ repr(i) }} {% if page == repr(i) %} selected {% end %} >{{ repr(i) }}</option>
+              {% end %}
+              </select>
+              页
+          </form>
+      </div>
     
     <script type="text/javascript">
 

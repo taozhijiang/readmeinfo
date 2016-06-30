@@ -132,7 +132,11 @@ class RecSvdThread(threading.Thread):
     def do_calc_svd(self):
         
         print("字典长度：%d" %(nlp_master.get_dict_len()))
-        self.k_value = int(0.2*(nlp_master.get_dict_len()))
+        self.k_value = int(0.1*(nlp_master.get_dict_len()))
+        if self.k_value < 300:
+            self.k_value = 300
+        if self.k_value > 1000:
+            self.k_value = 1000
         print("k值：%d" %(self.k_value))            
         
         tfidf = models.TfidfModel(list(nlp_master._id_docs.values()))
@@ -140,7 +144,7 @@ class RecSvdThread(threading.Thread):
     
         # num_topics，起到降维的作用，推荐参数为 200–500
         # LSI空间
-        self.lsi = models.LsiModel(tfidf_corpus, id2word=nlp_master.dictionary, num_topics=self.k_value)
+        self.lsi = models.LsiModel(tfidf_corpus, id2word=nlp_master.dictionary, num_topics=self.k_value, chunksize=2000)
         
         # 保存更新结果
         today = datetime.date.today()
@@ -245,6 +249,6 @@ class RecSvdThread(threading.Thread):
             #　推荐条目完整性    
             self._database_santy_check()
             
-            print('RecSVDThread:A')
+            print('RecSVDThread:A time:' + repr(datetime.datetime.now()))
 
         return

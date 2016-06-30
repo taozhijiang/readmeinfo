@@ -32,3 +32,13 @@
     color:red;
     font-size:18px;
 }
+
+.eye_process_body {
+    background-color: rgb(193, 230, 198); 
+    background-size: cover;
+}
+
+.eye_process_head {
+    opacity: 0.7;
+    background-color: rgb(201, 153, 121);
+}

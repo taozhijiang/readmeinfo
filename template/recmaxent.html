@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html>
-   <head>
-    <meta charset=utf-8>
-    <title>{{ title }}</title>
-    <script type="text/javascript" src="static/jquery-2.2.4.min.js"></script>
-    <style> 
-      p{margin:2px 0} 
-    </style> 
+    <head>    
+        <meta charset=utf-8>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script type="text/javascript" src="static/jquery-2.2.4.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="/static/main.css") />
+        <title>{{ title }}</title>
+        <style> 
+          p{margin:2px 0} 
+        </style> 
       {% from utils import utc2local %}
    </head>
 
-   <body>
-<p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
-<p><a href="/">推荐算法：MaxEnt</p>
-<form id="formtypes" action="/remaxent" method="get">
-    <input type="radio" name="sort" value="0" {% if sort== "0" %} checked="checked" {% end %} >喜欢->讨厌</input>
-    <input type="radio" name="sort" value="1" {% if sort== "1" %} checked="checked" {% end %} >讨厌->喜欢</input>
-</form>
+  <body class="eye_process_body" >
+  
+  <div class="eye_process_head">
+  <p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
+  <p><a href="/">当前推荐算法：MaxEnt</p>
+  <form id="formtypes" action="/remaxent" method="get">
+      <input type="radio" name="sort" value="0" {% if sort== "0" %} checked="checked" {% end %} >喜欢->讨厌</input>
+      <input type="radio" name="sort" value="1" {% if sort== "1" %} checked="checked" {% end %} >讨厌->喜欢</input>
+  </form>
+  </div>
     
     <script type="text/javascript">
 
