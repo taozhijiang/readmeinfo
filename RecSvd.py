@@ -246,8 +246,9 @@ class RecSvdThread(threading.Thread):
                     break
                 
                 
-            #　推荐条目完整性    
-            self._database_santy_check()
+            #　推荐条目完整性 
+            if self._user_classifier:   
+                self._database_santy_check()
             
             print('RecSVDThread:A time:' + repr(datetime.datetime.now()))
 

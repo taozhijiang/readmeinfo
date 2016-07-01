@@ -13,13 +13,15 @@
       {% from utils import utc2local %}
    </head>
 
-  <body class="eye_process_body" >
+  <body class="eye_process_body" id="center" >
     <div class="eye_process_head">
         <p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？</p>
         <p><a href="/">当前推荐算法：SVD</p>
         <form id="formtypes" action="/remaxent" method="get">
+            <p>排序：
             <input type="radio" name="sort" value="0" {% if sort== "0" %} checked="checked" {% end %} >喜欢->讨厌</input>
             <input type="radio" name="sort" value="1" {% if sort== "1" %} checked="checked" {% end %} >讨厌->喜欢</input>
+            </p>
         </form>
     </div>
     <script type="text/javascript">
@@ -43,20 +45,21 @@
     }
     </script>
 
-     <ul style="line-height: 100%">
-     {% for item in items %}
-         <li>
-            <span style="bold"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</a>　<a target="_blank" href={% raw "/cache?id="+repr(item['news_uuid']) %}>页面快照</a></span>
-           <form>
-		   <p>发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}, 点评:
-            <input type="radio" name={{ item['news_uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>赞</input>
-            <input type="radio" name={{ item['news_uuid'] }} value="2" onclick="valueMe(this);" {% if item['news_score'] == 2 %} checked="checked" {% end %}>踩</input>
-           </form>
-        </p>
-         <div>{% raw item['news_desc'] %}</div>
-         <br/><br/>
-     {% end %}
-    </ul>
+<br/>
+{% for item in items %}
+    <div class="news_item">
+      <span class="title_info"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</a>　<a target="_blank" href={% raw "/cache?id="+repr(item['news_uuid']) %}>页面快照</a></span>
+      <form>
+         <p class="item_info">发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}</p>
+         <p>点评:
+              <input type="radio" name={{ item['news_uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>点赞</input>
+              <input type="radio" name={{ item['news_uuid'] }} value="2" onclick="valueMe(this);" {% if item['news_score'] == 2 %} checked="checked" {% end %}>踩一脚</input>
+         </p>
+      </form>
+      <div>{% raw item['news_desc'][:500] %}</div>
+  </div>
+  <br/>
+{% end %}
 
 
    </body>

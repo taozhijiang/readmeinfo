@@ -16,21 +16,18 @@
 }
 
 .head_text {
-    font-family: tahoma, 'microsoft yahei', 微软雅黑;
     color:#4d90fe;
-    font-size:24px;
+    font-size: 150%;
 }
 
 .normal_text {
-    font-family: tahoma, 'microsoft yahei', 微软雅黑;
     color:#0479A7;
-    font-size:18px;
+    font-size:100%;
 }
 
 .error_text {
-    font-family: tahoma, 'microsoft yahei', 微软雅黑;
     color:red;
-    font-size:18px;
+    font-size:120%;
 }
 
 .eye_process_body {
@@ -39,6 +36,38 @@
 }
 
 .eye_process_head {
+    font-family: STHeiti,'Microsoft YaHei',Helvetica,Arial,sans-serif;
     opacity: 0.7;
     background-color: rgb(201, 153, 121);
+}
+
+a:link, a:visited, a:active {
+    text-decoration: none;
+}
+
+.news_item {
+    padding: 4px 0;
+    border-bottom: 1px solid #f5f6f7;
+}
+
+.item_info {
+    font-family: STHeiti,Microsoft YaHei,Helvetica,Arial,sans-serif;
+    color: #999;
+    font-size: 50%;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.title_info {
+    font-family: STHeiti,'Microsoft YaHei',Helvetica,Arial,sans-serif;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+
+@media screen and (min-device-width: 800px) {
+    #center {
+    margin:0 auto;
+    width:800px;
+    }
 }

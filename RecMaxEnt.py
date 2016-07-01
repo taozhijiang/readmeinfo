@@ -166,8 +166,10 @@ class RecMaxEntThread(threading.Thread):
                 
                 if break_flag:
                     break
+
             #　推荐条目完整性    
-            self._database_santy_check()
+            if self._user_classifier:
+                self._database_santy_check()
             
             print('RecMaxEntThread:A time:' + repr(datetime.datetime.now()))
 
