@@ -34,8 +34,8 @@ class RecSvdThread(threading.Thread):
         self.k_value = 0
         
         self.lsi = None
-        self.MAX_INTEREST = 5
-        self.THRESH_HOLD  = 0.5
+        self.MAX_INTEREST = 10
+        self.THRESH_HOLD_MINI  = 0.2    #不能再低了
         
         self.dumpfile = "dumpdir/recsvd_dump.%d_%d" %(today.month, today.day)
         
@@ -75,19 +75,30 @@ class RecSvdThread(threading.Thread):
             news_vector = nlp_master.get_old_vect(item['news_uuid']);
             good_lsi.append(self.lsi[news_vector])
             good_lsi_id.append(item['news_uuid'])
-        good_idx = similarities.MatrixSimilarity(good_lsi)
+        good_idx = similarities.MatrixSimilarity(good_lsi, num_features=self.k_value)
         # 历史点赞文章索引建立完毕
         
-        self._user_classifier[userid] = dict()
-        
-        best_good_id = {}
-        for i in range(len(good_lsi)):
-            sims = good_idx[good_lsi[i]]        # perform a similarity query against the corpus，　相似度检索
-            sims = sorted(enumerate(sims), key=lambda item: -item[1])
-            best_good_id[i] = [ item[0] for item in sims if item[1] > self.THRESH_HOLD ]
+        self._user_classifier[userid] = dict() 
+        self._user_classifier[userid]['vect'] = np.array([], dtype=np.float64)
         
         # 计算兴趣点
-        self._user_classifier[userid]['vect'] = self.extract_interests(good_lsi, best_good_id)
+        print("提取用户[%d]兴趣点..." %(userid))        
+        
+        thresh_hold = 0.7        
+        while True:
+            best_good_id = {}
+            print("迭代阈值：%f" %( thresh_hold) )
+            for i in range(len(good_lsi)):
+                sims = good_idx[good_lsi[i]]        # perform a similarity query against the corpus，　相似度检索
+                sims = sorted(enumerate(sims), key=lambda item: -item[1])
+                best_good_id[i] = [ item[0] for item in sims if item[1] > thresh_hold ]
+            
+            self._user_classifier[userid]['vect'] = self.extract_interests(good_lsi, best_good_id)
+            if self._user_classifier[userid]['vect'].shape[0]:
+                break
+            if thresh_hold < self.THRESH_HOLD_MINI:
+                break
+            thresh_hold -= 0.05
         
         return
     
@@ -126,6 +137,7 @@ class RecSvdThread(threading.Thread):
             full_lsi_array = np.array(full_lsi)
             interests.append(matutils.unitvec(np.average(full_lsi_array, axis=0)) )
         
+        print("用户兴趣点个数：%d" %(len(interests)) )
         return np.array(interests)
 
         
@@ -182,13 +194,17 @@ class RecSvdThread(threading.Thread):
         sql = """ SELECT userid FROM user_rcd WHERE rcdsvd IS NULL GROUP BY userid; """
         users = self.db_conn.query(sql)
         for user in users:
-            if user['userid'] not in self._user_classifier or not self._user_classifier[user['userid']]:
+            if user['userid'] not in self._user_classifier or not self._user_classifier[user['userid']]['vect'].shape[0]:
                 print("Building RecSVD for user %d" %(user['userid']))
                 self._train_mode_for_user(user['userid'])            
             
             # 没有推荐训练信息，放弃    
             if not self._user_classifier[user['userid']]:
                 continue
+            
+            # 推荐特征无
+            if not self._user_classifier[user['userid']]['vect'].shape[0]:
+                continue            
             
             sql = """ SELECT rcd_uuid, userid, newsid FROM user_rcd WHERE userid=%d AND date=CURRENT_DATE() AND rcdsvd IS NULL; """ %(user['userid'])
             items = self.db_conn.query(sql)
@@ -225,7 +241,8 @@ class RecSvdThread(threading.Thread):
                         self._train_mode_for_user(it_userid)
 
                     # 没有推荐训练信息，放弃    
-                    if not self._user_classifier[it_userid]:
+                    # 或者训练得到的特征为空
+                    if not self._user_classifier[it_userid] or not self._user_classifier[it_userid]['vect'].shape[0]:
                         continue    
                     
                     self._train_mode_for_user(it_userid)    

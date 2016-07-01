@@ -308,7 +308,7 @@ class CacheHandler(BaseHandler):
             self.write("Unicode convert error!")
             return
         
-        self.write("<h3>ATTENTION: Content just been cached, all rights reserved to the original website!</h3>")           
+        self.write("<h3 style='color:red'>ATTENTION: Content just been cached, all rights reserved to the original website!</h3>")           
         self.write(response.body.decode(encoding.decode("UTF-8"),'ignore'))        
         return
  
