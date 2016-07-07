@@ -73,7 +73,7 @@ class NLPMaster():
             return None
 
     def build_wordcorpus(self):
-        with open(self.stopfile, 'r') as fin:
+        with open(self.stopfile, 'r', encoding='utf8') as fin:
             for line in fin:
                 line = line.strip()
                 self._stop_words.add(line)        

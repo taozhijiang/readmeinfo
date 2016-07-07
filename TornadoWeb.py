@@ -301,7 +301,7 @@ class CacheHandler(BaseHandler):
         encoding = match.group(match.lastindex) if match else b"utf8"
         
         try:
-            with open(target_os_file, "w") as fout:
+            with open(target_os_file, "w", encoding="utf8") as fout:
                 fout.write(response.body.decode(encoding.decode("UTF-8"),'ignore'))            
                 
         except Exception as e:

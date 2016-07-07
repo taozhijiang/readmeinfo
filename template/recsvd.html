@@ -47,12 +47,13 @@
 <br/>
 {% for item in items %}
     <div class="news_item">
-      <span class="title_info"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</a>　<a target="_blank" href={% raw "/cache?id="+repr(item['news_uuid']) %}>页面快照</a></span>
+      <span class="title_info"><a href={{ item['news_link'] }} target="_blank">{{ item['news_title'] }}</a></span>
       <form>
          <p class="item_info">发布时间：{{ utc2local(item['news_pubtime']) }}, 文章来源:{{ item['news_sitefrom'] }}</p>
          <p>点评:
               <input type="radio" name={{ item['news_uuid'] }} value="0" onclick="valueMe(this);" {% if item['news_score'] == 0 %} checked="checked" {% end %}>点赞</input>
               <input type="radio" name={{ item['news_uuid'] }} value="2" onclick="valueMe(this);" {% if item['news_score'] == 2 %} checked="checked" {% end %}>踩一脚</input>
+              &nbsp;&nbsp;<a target="_blank" href={% raw "/cache?id="+repr(item['news_uuid']) %}>页面快照</a>
          </p>
       </form>
       <div>{% raw item['news_desc'][:500] %}</div>

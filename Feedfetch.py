@@ -38,10 +38,12 @@ class FeedfetchThread(threading.Thread):
         if not d.feed or 'link' not in d.feed:
             return None
         print("==> LINK: %s" %(d.feed.link))
+        news_count = 0
         for item in d.entries:
             sql = """ SELECT news_link FROM site_news WHERE news_link=%s """
             if self.db_conn.execute_rowcount(sql, item.link):
                 print(" Already done for %s" %(d.feed.link))
+                print(" Done with[%d]" %(news_count))
                 return
             if item.updated_parsed:
                 tm = datetime.datetime(item.updated_parsed[0],item.updated_parsed[1],item.updated_parsed[2],
@@ -52,14 +54,16 @@ class FeedfetchThread(threading.Thread):
             # 对每个站点的description净化特殊处理
             for site_d in desc_first_tag:
                 if site_d in item.link:
-                    soup = BeautifulSoup(item.description)
+                    soup = BeautifulSoup(item.description, "html.parser")
                     if soup.find(desc_first_tag[site_d]):
                         item.description = soup.find(desc_first_tag[site_d]).text
             
             sql = """ INSERT INTO site_news (news_title, news_link, news_pubtime, news_desc, news_sitefrom, time) 
             VALUES (%s, %s, %s, %s, %s, NOW()) """
             self.db_conn.execute(sql, item.title, item.link, tm, item.description, d.feed.title)
-        print("Done.")
+            news_count += 1
+            
+        print(" Done with[%d]" %(news_count))
             
         return
     
