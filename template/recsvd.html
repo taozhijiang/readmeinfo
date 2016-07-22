@@ -16,7 +16,7 @@
   <body class="eye_process_body" id="center" >
     <div class="eye_process_head">
         <p><a href="/">主页</a> 当前用户: {{current_user['username']}}, 想要<a href="/logout">登出</a>？推荐算法：SVD</p>
-        <form id="formtypes" action="/remaxent" method="get">
+        <form id="formtypes" action="/resvd" method="get">
             <p>排序：
             <input type="radio" name="sort" value="0" {% if sort== "0" %} checked="checked" {% end %} >喜欢->讨厌</input>
             <input type="radio" name="sort" value="1" {% if sort== "1" %} checked="checked" {% end %} >讨厌->喜欢</input>

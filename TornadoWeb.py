@@ -155,10 +155,10 @@ class BrowseHandler(BaseHandler):
         page = self.get_query_argument('page', "0")
         sql = """SELECT * FROM (
                      SELECT site_news.news_uuid, site_news.news_title, site_news.news_pubtime, site_news.news_link, site_news.news_sitefrom, 
-			    site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, ATS.userid FROM site_news 
+                     site_news.news_desc, IFNULL(ATS.news_user_score, 1) as news_score, ATS.userid FROM site_news 
                         LEFT JOIN (SELECT news_user_score, newsid, userid FROM user_score WHERE userid=%d ) ATS ON site_news.news_uuid = ATS.newsid 
                      WHERE DATE(site_news.time)=CURRENT_DATE()
-		) ATT  
+                     ) ATT  
                 WHERE news_score=%d ORDER BY news_pubtime DESC """ %(user_id, int(types))
         total_count = db_conn.execute_rowcount(sql + ";")
         page_num = int(total_count/CNT_PER_PAGE) + bool(total_count%CNT_PER_PAGE);
